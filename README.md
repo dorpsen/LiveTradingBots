@@ -1,22 +1,27 @@
 # LiveTradingBots
 
 _A homemade humble library to run automated python crypto trading bots_
+_Adapted to work with Kucoin_
 
 \
 🛠️ Setup commands (virtual environment included)
 -------------
-> git clone https://github.com/RobotTraders/LiveTradingBots.git \
+git clone https://github.com/dorpsen/LiveTradingBots.git \
 > bash LiveTradingBots/install.sh
 
 
 \
 ⭐ Bots and strategies
 -------------
-- **Complete Envelope Bot** : For detailed information on functionality, installation, and access to all our resources, including codes and explanatory videos, please visit our [article](https://robottraders.io/blog/envelope-trading-bot).
+- **Complete Envelope Bot** : For detailed information on functionality, installation, and access to all our resources, including codes and explanatory videos, please visit the [article](https://robottraders.io/blog/envelope-trading-bot).
 _Use run_envelope.sh to run the bot with the virtual environment, either manually or via cron._
 
 - **Bitunix Bot Template** : This is a simple but all rounded bot code template that can be used to build upon. For detailed information on functionality, installation, and access to all our resources, check this [video](https://youtu.be/Xj_hBOU_7Mc).
 _Use run_bitunix_template_bot.sh to run the bot with the virtual environment, either manually or via cron. For example, the terminal command from root/home of VPS would be: bash LiveTradingBots/code/run_bitunix_bot_template.sh_
+
+- I made some efforts to let it run on Fedora and Ubuntu. _
+
+- there is something to say about working with Kucoin but no good lines of text for now._
 
 \
 ✅ Requirements
