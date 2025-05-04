@@ -1,74 +1,80 @@
 #!/bin/bash
 
-# setup_env.sh
-# Description: Sets up the Python environment for the trading bot project on Fedora.
-# Usage: Run from the project root directory: ./setup_env.sh
+echo "--- Trading Bot Environment Setup ---"
 
-# Exit immediately if a command exits with a non-zero status.
-set -e
-
-echo "--- Trading Bot Environment Setup for Fedora ---"
-
-# --- Configuration ---
-VENV_DIR=".venv" # Name of the virtual environment directory
-PYTHON_CMD="python3" # Command to use for Python 3
-REQ_FILE="requirements.txt"
-REQ_DEV_FILE="requirements-dev.txt" # Optional: for pytest, etc.
-
-# --- System Dependencies ---
-echo "[1/4] Checking/Installing system build dependencies (requires sudo)..."
-# Needed for building some Python packages (e.g., those with C extensions)
-sudo dnf install -y gcc python3-devel redhat-rpm-config || {
-    echo "Error: Failed to install system dependencies with dnf."
-    exit 1
+# Function to check for the existence of a command
+command_exists () {
+  command -v "$1" >/dev/null 2>&1
 }
-echo "System dependencies checked/installed."
 
-# --- Python Check ---
-echo "[2/4] Checking for Python 3..."
-if ! command -v $PYTHON_CMD &> /dev/null; then
-    echo "Error: $PYTHON_CMD could not be found. Please install Python 3."
-    exit 1
-fi
-echo "Found Python 3: $($PYTHON_CMD --version)"
-
-# --- Virtual Environment ---
-echo "[3/4] Setting up Python virtual environment in '$VENV_DIR'..."
-if [ ! -d "$VENV_DIR" ]; then
-    $PYTHON_CMD -m venv $VENV_DIR
-    echo "Virtual environment created."
+# Detect the operating system
+if command_exists apt-get; then
+  OS="Ubuntu"
+elif command_exists dnf; then
+  OS="Fedora"
 else
-    echo "Virtual environment '$VENV_DIR' already exists."
+  echo "Error: Could not determine the operating system."
+  exit 1
 fi
 
-# Activate script path (adjust if needed, but we'll call pip directly)
-PYTHON_IN_VENV="$VENV_DIR/bin/python"
-PIP_IN_VENV="$VENV_DIR/bin/pip"
+echo "[1/4] Checking/Installing system build dependencies (requires sudo)..."
 
-# --- Install Python Packages ---
-echo "[4/4] Installing Python packages from $REQ_FILE..."
-if [ ! -f "$REQ_FILE" ]; then
-    echo "Error: $REQ_FILE not found in the current directory."
-    echo "Please ensure you are running this script from the project root."
+case "$OS" in
+  "Ubuntu")
+    echo "Detected Ubuntu. Installing build-essential and python3-dev..."
+    sudo apt-get update
+    sudo apt-get install -y build-essential python3-dev  # Or python-dev for Python 2
+    if [ $? -ne 0 ]; then
+      echo "Error: Failed to install system dependencies with apt."
+      exit 1
+    fi
+    ;;
+  "Fedora")
+    echo "Detected Fedora. Installing development tools and python3-devel..."
+    sudo dnf update -y
+    sudo dnf install -y "@development-tools" python3-devel  # Or python-devel for Python 2
+    if [ $? -ne 0 ]; then
+      echo "Error: Failed to install system dependencies with dnf."
+      exit 1
+    fi
+    ;;
+  *)
+    echo "Error: Unsupported operating system: $OS"
     exit 1
+    ;;
+esac
+
+echo "[2/4] Checking/Creating virtual environment (if needed)..."
+if ! command_exists python3; then
+  echo "Error: Python 3 is not installed. Please install it manually."
+  exit 1
 fi
 
-$PIP_IN_VENV install --upgrade pip
-$PIP_IN_VENV install -r $REQ_FILE
+if ! command_exists virtualenv; then
+  echo "Installing virtualenv..."
+  pip3 install --no-cache-dir virtualenv
+  if [ $? -ne 0 ]; then
+    echo "Error: Failed to install virtualenv."
+    exit 1
+  fi
+fi
 
-# Optional: Install development dependencies
-if [ -f "$REQ_DEV_FILE" ]; then
-    echo "Installing development packages from $REQ_DEV_FILE..."
-    $PIP_IN_VENV install -r $REQ_DEV_FILE
+if [ ! -d "venv" ]; then
+  echo "Creating virtual environment 'venv'..."
+  python3 -m venv venv
+  if [ $? -ne 0 ]; then
+    echo "Error: Failed to create virtual environment."
+    exit 1
+  fi
 else
-    echo "No $REQ_DEV_FILE found, skipping development dependencies."
+  echo "Virtual environment 'venv' already exists."
 fi
 
-echo "Python packages installed."
+echo "[3/4] Activating virtual environment and installing Python dependencies..."
+source venv/bin/activate
+pip3 install --no-cache-dir -r requirements.txt
+deactivate
 
-echo "--- Setup Complete ---"
-echo "To activate the virtual environment, run:"
-echo "source $VENV_DIR/bin/activate"
-echo "----------------------"
-
-exit 0
+echo "[4/4] Environment setup complete!"
+echo "You can now activate the virtual environment using: source venv/bin/activate"
+echo "And run your trading bot."
